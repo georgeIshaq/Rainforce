@@ -10,11 +10,13 @@ import { useSystemPrompts } from '@/hooks/useSystemPrompts';
 interface SystemPromptAreaProps {
   initialPrompt?: string;
   onPromptSaved?: () => void;
+  onPromptChange?: (prompt: string) => void;
 }
 
 export default function SystemPromptArea({ 
   initialPrompt = "You are a helpful AI assistant. You provide clear, accurate, and concise responses to user queries.",
-  onPromptSaved
+  onPromptSaved,
+  onPromptChange
 }: SystemPromptAreaProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [prompt, setPrompt] = useState(initialPrompt);
@@ -52,8 +54,9 @@ export default function SystemPromptArea({
       const mostRecent = prompts[0];
       setPrompt(mostRecent.content);
       setLastSavedId(mostRecent.id);
+      onPromptChange?.(mostRecent.content);
     }
-  }, [prompts, lastSavedId]);
+  }, [prompts, lastSavedId, onPromptChange]);
 
   const handleSave = async () => {
     // Just exit edit mode without saving to database
@@ -62,6 +65,7 @@ export default function SystemPromptArea({
 
   const handleCancel = () => {
     setPrompt(initialPrompt);
+    onPromptChange?.(initialPrompt);
     setIsEditing(false);
   };
 
@@ -165,7 +169,10 @@ export default function SystemPromptArea({
           {isEditing ? (
             <Textarea
               value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
+              onChange={(e) => {
+                setPrompt(e.target.value);
+                onPromptChange?.(e.target.value);
+              }}
               className="w-full h-full resize-none border-none bg-transparent text-gray-100 placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm leading-relaxed"
               placeholder="Enter your system prompt here..."
               autoFocus

@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import SystemPromptArea from "@/components/SystemPromptArea";
 import PromptManager from "@/components/PromptManager";
+import PromptAnalysisTable from "@/components/PromptAnalysisTable";
 
 export default function Home() {
   const [selectedPrompt, setSelectedPrompt] = useState<string>("");
@@ -19,7 +20,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 p-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Top Section: System Prompt Area and Prompt Manager */}
         <div className="flex gap-8">
           <SystemPromptArea 
             key={`system-${selectedPrompt}-${refreshKey}`} 
@@ -31,6 +33,9 @@ export default function Home() {
             onSelectPrompt={handleSelectPrompt} 
           />
         </div>
+        
+        {/* Bottom Section: Analysis Table */}
+        <PromptAnalysisTable />
       </div>
     </div>
   );
