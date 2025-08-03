@@ -21,8 +21,7 @@ export default function SystemPromptArea({
   const [isEditing, setIsEditing] = useState(false);
   const [prompt, setPrompt] = useState(initialPrompt);
   const [isSaving, setIsSaving] = useState(false);
-  const [lastSavedId, setLastSavedId] = useState<string | null>(null);
-  const [qdrantStatus, setQdrantStatus] = useState<'checking' | 'connected' | 'error'>('checking');
+  const [lastSavedId, setLastSavedId] = useState<number | null>(null);
   
   const { 
     prompts, 
@@ -32,29 +31,13 @@ export default function SystemPromptArea({
     refreshPrompts 
   } = useSystemPrompts();
 
-  // Check Qdrant connection status
-  useEffect(() => {
-    const checkQdrantConnection = async () => {
-      try {
-        const response = await fetch('/api/qdrant/health');
-        const result = await response.json();
-        setQdrantStatus(result.success ? 'connected' : 'error');
-      } catch (err) {
-        console.error('Qdrant connection check failed:', err);
-        setQdrantStatus('error');
-      }
-    };
-
-    checkQdrantConnection();
-  }, []);
-
   // Load the most recent prompt on component mount
   useEffect(() => {
     if (prompts.length > 0 && !lastSavedId) {
       const mostRecent = prompts[0];
-      setPrompt(mostRecent.content);
+      setPrompt(mostRecent.prompt);
       setLastSavedId(mostRecent.id);
-      onPromptChange?.(mostRecent.content);
+      onPromptChange?.(mostRecent.prompt);
     }
   }, [prompts, lastSavedId, onPromptChange]);
 
@@ -72,7 +55,7 @@ export default function SystemPromptArea({
   const handleSaveToDatabase = async () => {
     setIsSaving(true);
     try {
-      const savedPrompt = await createPrompt(prompt, `Prompt - ${new Date().toLocaleString()}`);
+      const savedPrompt = await createPrompt(prompt);
       if (savedPrompt) {
         console.log('New prompt saved to database:', savedPrompt);
         await refreshPrompts();
@@ -96,19 +79,19 @@ export default function SystemPromptArea({
             <h2 className="text-xl font-semibold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
               System Prompt
             </h2>
-            {/* Qdrant connection status */}
+            {/* Supabase connection status */}
             <div className="flex items-center gap-1">
               <div 
                 className={`w-2 h-2 rounded-full ${
-                  qdrantStatus === 'connected' ? 'bg-green-400' : 
-                  qdrantStatus === 'error' ? 'bg-red-400' : 
-                  'bg-yellow-400 animate-pulse'
+                  loading ? 'bg-yellow-400 animate-pulse' :
+                  error ? 'bg-red-400' : 
+                  'bg-green-400'
                 }`} 
               />
               <span className="text-xs text-gray-400">
-                {qdrantStatus === 'connected' ? 'DB' : 
-                 qdrantStatus === 'error' ? 'ERR' : 
-                 'CHK'}
+                {loading ? 'LOAD' :
+                 error ? 'ERR' : 
+                 'DB'}
               </span>
             </div>
           </div>

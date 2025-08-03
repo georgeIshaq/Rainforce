@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    const { agent_prompt, attack, agent_response, evaluation } = body;
+    const { agent_prompt, attack, agent_response, evaluation, recommendation } = body;
 
     if (!attack || !agent_response) {
       return NextResponse.json(
@@ -55,7 +55,8 @@ export async function POST(request: NextRequest) {
       agent_prompt,
       attack,
       agent_response,
-      evaluation
+      evaluation,
+      recommendation
     });
 
     return NextResponse.json({

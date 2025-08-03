@@ -34,27 +34,19 @@ export type Database = {
     Tables: {
       system_prompts: {
         Row: {
-          id: string;
-          content: string;
-          title: string;
-          tags: string[];
+          id: number;
           created_at: string;
-          updated_at: string;
+          system_prompt: string | null;
         };
         Insert: {
-          id?: string;
-          content: string;
-          title: string;
-          tags?: string[];
+          id?: number;
           created_at?: string;
-          updated_at?: string;
+          system_prompt?: string | null;
         };
         Update: {
-          id?: string;
-          content?: string;
-          title?: string;
-          tags?: string[];
-          updated_at?: string;
+          id?: number;
+          created_at?: string;
+          system_prompt?: string | null;
         };
       };
       attack_patterns: {
@@ -88,6 +80,7 @@ export type Database = {
           agent_response: string;
           created_at: string | null;
           evaluation: string | null;
+          recommendation: string | null;
         };
         Insert: {
           id?: number;
@@ -96,6 +89,7 @@ export type Database = {
           agent_response: string;
           created_at?: string | null;
           evaluation?: string | null;
+          recommendation?: string | null;
         };
         Update: {
           id?: number;
@@ -104,6 +98,7 @@ export type Database = {
           agent_response?: string;
           created_at?: string | null;
           evaluation?: string | null;
+          recommendation?: string | null;
         };
       };
     };

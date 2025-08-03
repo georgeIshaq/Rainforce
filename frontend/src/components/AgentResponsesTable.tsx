@@ -202,6 +202,7 @@ const AgentResponsesTable: React.FC = () => {
                   <TableHead className="text-gray-300">Attack</TableHead>
                   <TableHead className="text-gray-300">Agent Response</TableHead>
                   <TableHead className="text-gray-300">Evaluation</TableHead>
+                  <TableHead className="text-gray-300">Recommendation</TableHead>
                   <TableHead className="text-gray-300">Created</TableHead>
                 </TableRow>
               </TableHeader>
@@ -235,6 +236,11 @@ const AgentResponsesTable: React.FC = () => {
                       <TableCell>
                         {getEvaluationBadge(response.evaluation)}
                       </TableCell>
+                      <TableCell className="text-gray-300">
+                        <span className="text-sm">
+                          {response.recommendation ? truncateText(response.recommendation, 60) : 'No recommendation'}
+                        </span>
+                      </TableCell>
                       <TableCell className="text-gray-400 text-sm">
                         <div className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
@@ -246,7 +252,7 @@ const AgentResponsesTable: React.FC = () => {
                     {/* Expanded Row Content */}
                     {expandedRows.has(response.id) && (
                       <TableRow className="border-gray-700">
-                        <TableCell colSpan={5} className="bg-gray-800/30">
+                        <TableCell colSpan={6} className="bg-gray-800/30">
                           <div className="space-y-4 p-4">
                             {/* Agent Prompt */}
                             {response.agent_prompt && (
@@ -289,8 +295,23 @@ const AgentResponsesTable: React.FC = () => {
                               </div>
                             </div>
                             
+                            {/* Recommendation */}
+                            {response.recommendation && (
+                              <div>
+                                <h4 className="text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                                  <CheckCircle className="w-4 h-4 text-purple-400" />
+                                  Recommendation
+                                </h4>
+                                <div className="bg-gray-900 border border-gray-600 rounded-lg p-3">
+                                  <pre className="text-sm text-gray-300 whitespace-pre-wrap">
+                                    {response.recommendation}
+                                  </pre>
+                                </div>
+                              </div>
+                            )}
+                            
                             {/* Metadata */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-700">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-gray-700">
                               <div>
                                 <span className="text-xs text-gray-500">Response ID</span>
                                 <p className="text-sm text-gray-300 font-mono">#{response.id}</p>
@@ -300,6 +321,12 @@ const AgentResponsesTable: React.FC = () => {
                                 <div className="mt-1">
                                   {getEvaluationBadge(response.evaluation)}
                                 </div>
+                              </div>
+                              <div>
+                                <span className="text-xs text-gray-500">Has Recommendation</span>
+                                <p className="text-sm text-gray-300">
+                                  {response.recommendation ? 'Yes' : 'No'}
+                                </p>
                               </div>
                               <div>
                                 <span className="text-xs text-gray-500">Created At</span>

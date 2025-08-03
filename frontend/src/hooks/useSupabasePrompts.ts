@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import SupabaseService, { SystemPrompt, SystemPromptInsert } from '@/lib/supabaseService';
+import SupabaseService, { SystemPrompt } from '@/lib/supabaseService';
 
 interface UseSupabasePromptsReturn {
   prompts: SystemPrompt[];
   loading: boolean;
   error: string | null;
-  createPrompt: (content: string, title: string, tags?: string[]) => Promise<SystemPrompt | null>;
-  updatePrompt: (id: string, updates: Partial<SystemPrompt>) => Promise<SystemPrompt | null>;
-  deletePrompt: (id: string) => Promise<boolean>;
+  createPrompt: (prompt: string) => Promise<SystemPrompt | null>;
+  updatePrompt: (id: number, prompt: string) => Promise<SystemPrompt | null>;
+  deletePrompt: (id: number) => Promise<boolean>;
   searchPrompts: (query: string, limit?: number) => Promise<SystemPrompt[]>;
   refreshPrompts: () => Promise<void>;
   clearError: () => void;
@@ -35,20 +35,10 @@ export function useSupabasePrompts(): UseSupabasePromptsReturn {
   }, []);
 
   // Create a new prompt
-  const createPrompt = useCallback(async (
-    content: string, 
-    title: string, 
-    tags: string[] = []
-  ): Promise<SystemPrompt | null> => {
+  const createPrompt = useCallback(async (prompt: string): Promise<SystemPrompt | null> => {
     try {
       setError(null);
-      const promptData: SystemPromptInsert = {
-        content,
-        title,
-        tags,
-      };
-      
-      const newPrompt = await SupabaseService.createSystemPrompt(promptData);
+      const newPrompt = await SupabaseService.createSystemPrompt(prompt);
       setPrompts(prev => [newPrompt, ...prev]);
       return newPrompt;
     } catch (err) {
@@ -61,14 +51,14 @@ export function useSupabasePrompts(): UseSupabasePromptsReturn {
 
   // Update an existing prompt
   const updatePrompt = useCallback(async (
-    id: string, 
-    updates: Partial<SystemPrompt>
+    id: number, 
+    prompt: string
   ): Promise<SystemPrompt | null> => {
     try {
       setError(null);
-      const updatedPrompt = await SupabaseService.updateSystemPrompt(id, updates);
-      setPrompts(prev => prev.map(prompt => 
-        prompt.id === id ? updatedPrompt : prompt
+      const updatedPrompt = await SupabaseService.updateSystemPrompt(id, prompt);
+      setPrompts(prev => prev.map(p => 
+        p.id === id ? updatedPrompt : p
       ));
       return updatedPrompt;
     } catch (err) {
@@ -80,11 +70,11 @@ export function useSupabasePrompts(): UseSupabasePromptsReturn {
   }, []);
 
   // Delete a prompt
-  const deletePrompt = useCallback(async (id: string): Promise<boolean> => {
+  const deletePrompt = useCallback(async (id: number): Promise<boolean> => {
     try {
       setError(null);
       await SupabaseService.deleteSystemPrompt(id);
-      setPrompts(prev => prev.filter(prompt => prompt.id !== id));
+      setPrompts(prev => prev.filter(p => p.id !== id));
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete prompt';
@@ -139,14 +129,14 @@ export function useSupabasePrompts(): UseSupabasePromptsReturn {
           break;
         case 'UPDATE':
           if (payload.new) {
-            setPrompts(prev => prev.map(prompt => 
-              prompt.id === payload.new.id ? payload.new as SystemPrompt : prompt
+            setPrompts(prev => prev.map(p => 
+              p.id === payload.new.id ? payload.new as SystemPrompt : p
             ));
           }
           break;
         case 'DELETE':
           if (payload.old) {
-            setPrompts(prev => prev.filter(prompt => prompt.id !== payload.old.id));
+            setPrompts(prev => prev.filter(p => p.id !== payload.old.id));
           }
           break;
       }

@@ -10,6 +10,7 @@ interface UseAgentResponsesReturn {
   refetch: () => Promise<void>;
   searchResponses: (query: string) => Promise<void>;
   filterByEvaluation: (evaluation: string) => Promise<void>;
+  filterByRecommendation: (hasRecommendation: boolean) => Promise<void>;
   createResponse: (response: AgentResponseInsert) => Promise<AgentResponse | null>;
   updateResponse: (id: number, updates: AgentResponseUpdate) => Promise<AgentResponse | null>;
   deleteResponse: (id: number) => Promise<boolean>;
@@ -76,6 +77,25 @@ export function useAgentResponses(): UseAgentResponsesReturn {
       const errorMessage = err instanceof Error ? err.message : 'Failed to filter agent responses';
       setError(errorMessage);
       console.error('Error filtering agent responses:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const filterByRecommendation = useCallback(async (hasRecommendation: boolean) => {
+    try {
+      setLoading(true);
+      setError(null);
+      // Filter based on whether recommendation exists or not
+      const data = await SupabaseService.getAllAgentResponses();
+      const filteredData = data.filter(response => {
+        return hasRecommendation ? response.recommendation !== null : response.recommendation === null;
+      });
+      setResponses(filteredData);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to filter agent responses by recommendation';
+      setError(errorMessage);
+      console.error('Error filtering agent responses by recommendation:', err);
     } finally {
       setLoading(false);
     }
@@ -183,6 +203,7 @@ export function useAgentResponses(): UseAgentResponsesReturn {
     refetch: loadResponses,
     searchResponses,
     filterByEvaluation,
+    filterByRecommendation,
     createResponse,
     updateResponse,
     deleteResponse,

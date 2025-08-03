@@ -28,7 +28,7 @@ export class SupabaseService {
     return data || [];
   }
 
-  static async getSystemPromptById(id: string): Promise<SystemPrompt | null> {
+  static async getSystemPromptById(id: number): Promise<SystemPrompt | null> {
     const { data, error } = await supabase
       .from('system_prompts')
       .select('*')
@@ -45,14 +45,10 @@ export class SupabaseService {
     return data;
   }
 
-  static async createSystemPrompt(prompt: SystemPromptInsert): Promise<SystemPrompt> {
+  static async createSystemPrompt(prompt: string): Promise<SystemPrompt> {
     const { data, error } = await supabase
       .from('system_prompts')
-      .insert({
-        ...prompt,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
+      .insert({ system_prompt: prompt })
       .select()
       .single();
 
@@ -63,13 +59,10 @@ export class SupabaseService {
     return data;
   }
 
-  static async updateSystemPrompt(id: string, updates: SystemPromptUpdate): Promise<SystemPrompt> {
+  static async updateSystemPrompt(id: number, prompt: string): Promise<SystemPrompt> {
     const { data, error } = await supabase
       .from('system_prompts')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ system_prompt: prompt })
       .eq('id', id)
       .select()
       .single();
@@ -81,7 +74,7 @@ export class SupabaseService {
     return data;
   }
 
-  static async deleteSystemPrompt(id: string): Promise<void> {
+  static async deleteSystemPrompt(id: number): Promise<void> {
     const { error } = await supabase
       .from('system_prompts')
       .delete()
@@ -96,7 +89,7 @@ export class SupabaseService {
     const { data, error } = await supabase
       .from('system_prompts')
       .select('*')
-      .or(`content.ilike.%${query}%,title.ilike.%${query}%`)
+      .ilike('system_prompt', `%${query}%`)
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -324,7 +317,7 @@ export class SupabaseService {
     const { data, error } = await supabase
       .from('agent_responses')
       .select('*')
-      .or(`agent_prompt.ilike.%${query}%,attack.ilike.%${query}%,agent_response.ilike.%${query}%,evaluation.ilike.%${query}%`)
+      .or(`agent_prompt.ilike.%${query}%,attack.ilike.%${query}%,agent_response.ilike.%${query}%,evaluation.ilike.%${query}%,recommendation.ilike.%${query}%`)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -343,6 +336,20 @@ export class SupabaseService {
 
     if (error) {
       throw new Error(`Failed to filter agent responses by evaluation: ${error.message}`);
+    }
+
+    return data || [];
+  }
+
+  static async getAgentResponsesByRecommendation(recommendation: string): Promise<AgentResponse[]> {
+    const { data, error } = await supabase
+      .from('agent_responses')
+      .select('*')
+      .eq('recommendation', recommendation)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to filter agent responses by recommendation: ${error.message}`);
     }
 
     return data || [];

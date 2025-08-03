@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
 import { Trash2, Eye, Search, Loader2 } from 'lucide-react';
 import { useSystemPrompts, SystemPrompt } from '@/hooks/useSystemPrompts';
 import { Input } from '@/components/ui/input';
@@ -41,7 +40,7 @@ export default function PromptManager({ onSelectPrompt }: PromptManagerProps) {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     const success = await deletePrompt(id);
     if (success) {
       await refreshPrompts();
@@ -109,13 +108,13 @@ export default function PromptManager({ onSelectPrompt }: PromptManagerProps) {
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <h4 className="text-sm font-medium text-gray-100 truncate">
-                      {prompt.title || 'Untitled Prompt'}
+                      Prompt #{prompt.id}
                     </h4>
                     <div className="flex gap-1">
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => onSelectPrompt?.(prompt.content)}
+                        onClick={() => onSelectPrompt?.(prompt.prompt)}
                         className="h-6 w-6 p-0 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 transition-all duration-200"
                         title="Use this prompt"
                       >
@@ -134,23 +133,15 @@ export default function PromptManager({ onSelectPrompt }: PromptManagerProps) {
                   </div>
                   
                   <p className="text-xs text-gray-300 line-clamp-2 mb-2 leading-relaxed">
-                    {prompt.content}
+                    {prompt.prompt}
                   </p>
                   
                   <div className="flex items-center justify-between">
                     <div className="flex gap-1">
-                      {prompt.tags?.map((tag: string) => (
-                        <Badge 
-                          key={tag} 
-                          variant="secondary" 
-                          className="text-xs bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-300 border-purple-500/30"
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
+                      {/* Tags removed since they're not in the simplified schema */}
                     </div>
                     <span className="text-xs text-gray-500">
-                      {new Date(prompt.updatedAt).toLocaleDateString()}
+                      {new Date(prompt.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                 </div>

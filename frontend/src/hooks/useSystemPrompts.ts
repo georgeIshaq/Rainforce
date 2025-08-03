@@ -1,23 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import SupabaseService, { type SystemPrompt as SupabaseSystemPrompt } from '@/lib/supabaseService';
 
 export interface SystemPrompt {
-  id: string;
-  content: string;
-  title?: string;
-  tags?: string[];
+  id: number;
+  prompt: string;
   createdAt: Date;
-  updatedAt: Date;
 }
 
 export interface UseSystemPromptsReturn {
   prompts: SystemPrompt[];
   loading: boolean;
   error: string | null;
-  createPrompt: (content: string, title?: string, tags?: string[]) => Promise<SystemPrompt | null>;
-  updatePrompt: (id: string, content: string, title?: string, tags?: string[]) => Promise<SystemPrompt | null>;
-  deletePrompt: (id: string) => Promise<boolean>;
+  createPrompt: (prompt: string) => Promise<SystemPrompt | null>;
+  updatePrompt: (id: number, prompt: string) => Promise<SystemPrompt | null>;
+  deletePrompt: (id: number) => Promise<boolean>;
   searchPrompts: (query: string) => Promise<SystemPrompt[]>;
   refreshPrompts: () => Promise<void>;
 }
@@ -27,130 +25,78 @@ export function useSystemPrompts(): UseSystemPromptsReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Convert Supabase SystemPrompt to our interface
+  const convertPrompt = (supabasePrompt: SupabaseSystemPrompt): SystemPrompt => ({
+    id: supabasePrompt.id,
+    prompt: supabasePrompt.system_prompt || '',
+    createdAt: new Date(supabasePrompt.created_at),
+  });
+
   // Fetch all prompts
-  const fetchPrompts = async () => {
+  const fetchPrompts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/prompts');
-      const result = await response.json();
-      
-      if (result.success) {
-        // Convert date strings back to Date objects
-        const promptsWithDates = result.data.map((prompt: SystemPrompt & { createdAt: string; updatedAt: string }) => ({
-          ...prompt,
-          createdAt: new Date(prompt.createdAt),
-          updatedAt: new Date(prompt.updatedAt),
-        }));
-        setPrompts(promptsWithDates);
-      } else {
-        setError(result.error || 'Failed to fetch prompts');
-      }
+      const supabasePrompts = await SupabaseService.getAllSystemPrompts();
+      const convertedPrompts = supabasePrompts.map(convertPrompt);
+      setPrompts(convertedPrompts);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch prompts';
+      setError(errorMessage);
+      console.error('Error fetching prompts:', err);
+      // Set empty array as fallback
+      setPrompts([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Create a new prompt
-  const createPrompt = async (
-    content: string,
-    title?: string,
-    tags?: string[]
-  ): Promise<SystemPrompt | null> => {
+  const createPrompt = async (prompt: string): Promise<SystemPrompt | null> => {
     try {
       setError(null);
-      
-      const response = await fetch('/api/prompts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content, title, tags }),
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        const newPrompt = {
-          ...result.data,
-          createdAt: new Date(result.data.createdAt),
-          updatedAt: new Date(result.data.updatedAt),
-        };
-        setPrompts(prev => [newPrompt, ...prev]);
-        return newPrompt;
-      } else {
-        setError(result.error || 'Failed to create prompt');
-        return null;
-      }
+      const newSupabasePrompt = await SupabaseService.createSystemPrompt(prompt);
+      const newPrompt = convertPrompt(newSupabasePrompt);
+      setPrompts(prev => [newPrompt, ...prev]);
+      return newPrompt;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create prompt';
+      setError(errorMessage);
+      console.error('Error creating prompt:', err);
       return null;
     }
   };
 
   // Update an existing prompt
-  const updatePrompt = async (
-    id: string,
-    content: string,
-    title?: string,
-    tags?: string[]
-  ): Promise<SystemPrompt | null> => {
+  const updatePrompt = async (id: number, prompt: string): Promise<SystemPrompt | null> => {
     try {
       setError(null);
-      
-      const response = await fetch(`/api/prompts/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content, title, tags }),
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        const updatedPrompt = {
-          ...result.data,
-          createdAt: new Date(result.data.createdAt),
-          updatedAt: new Date(result.data.updatedAt),
-        };
-        setPrompts(prev => 
-          prev.map(prompt => prompt.id === id ? updatedPrompt : prompt)
-        );
-        return updatedPrompt;
-      } else {
-        setError(result.error || 'Failed to update prompt');
-        return null;
-      }
+      const updatedSupabasePrompt = await SupabaseService.updateSystemPrompt(id, prompt);
+      const updatedPrompt = convertPrompt(updatedSupabasePrompt);
+      setPrompts(prev => 
+        prev.map(p => p.id === id ? updatedPrompt : p)
+      );
+      return updatedPrompt;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update prompt';
+      setError(errorMessage);
+      console.error('Error updating prompt:', err);
       return null;
     }
   };
 
   // Delete a prompt
-  const deletePrompt = async (id: string): Promise<boolean> => {
+  const deletePrompt = async (id: number): Promise<boolean> => {
     try {
       setError(null);
-      
-      const response = await fetch(`/api/prompts/${id}`, {
-        method: 'DELETE',
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        setPrompts(prev => prev.filter(prompt => prompt.id !== id));
-        return true;
-      } else {
-        setError(result.error || 'Failed to delete prompt');
-        return false;
-      }
+      await SupabaseService.deleteSystemPrompt(id);
+      setPrompts(prev => prev.filter(p => p.id !== id));
+      return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete prompt';
+      setError(errorMessage);
+      console.error('Error deleting prompt:', err);
       return false;
     }
   };
@@ -159,22 +105,12 @@ export function useSystemPrompts(): UseSystemPromptsReturn {
   const searchPrompts = async (query: string): Promise<SystemPrompt[]> => {
     try {
       setError(null);
-      
-      const response = await fetch(`/api/prompts?q=${encodeURIComponent(query)}`);
-      const result = await response.json();
-      
-      if (result.success) {
-        return result.data.map((prompt: SystemPrompt & { createdAt: string; updatedAt: string }) => ({
-          ...prompt,
-          createdAt: new Date(prompt.createdAt),
-          updatedAt: new Date(prompt.updatedAt),
-        }));
-      } else {
-        setError(result.error || 'Failed to search prompts');
-        return [];
-      }
+      const supabasePrompts = await SupabaseService.searchSystemPrompts(query);
+      return supabasePrompts.map(convertPrompt);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to search prompts';
+      setError(errorMessage);
+      console.error('Error searching prompts:', err);
       return [];
     }
   };
@@ -187,7 +123,7 @@ export function useSystemPrompts(): UseSystemPromptsReturn {
   // Load prompts on mount
   useEffect(() => {
     fetchPrompts();
-  }, []);
+  }, [fetchPrompts]);
 
   return {
     prompts,
