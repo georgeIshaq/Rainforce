@@ -9,6 +9,10 @@ export type AttackPattern = Database['public']['Tables']['attack_patterns']['Row
 export type AttackPatternInsert = Database['public']['Tables']['attack_patterns']['Insert'];
 export type AttackPatternUpdate = Database['public']['Tables']['attack_patterns']['Update'];
 
+export type AgentResponse = Database['public']['Tables']['agent_responses']['Row'];
+export type AgentResponseInsert = Database['public']['Tables']['agent_responses']['Insert'];
+export type AgentResponseUpdate = Database['public']['Tables']['agent_responses']['Update'];
+
 export class SupabaseService {
   // System Prompts operations
   static async getAllSystemPrompts(): Promise<SystemPrompt[]> {
@@ -234,6 +238,125 @@ export class SupabaseService {
           event: '*', 
           schema: 'public', 
           table: 'attack_patterns' 
+        }, 
+        callback
+      )
+      .subscribe();
+  }
+
+  // Agent Responses operations
+  static async getAllAgentResponses(): Promise<AgentResponse[]> {
+    try {
+      const { data, error } = await supabase
+        .from('agent_responses')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw new Error(`Failed to fetch agent responses: ${error.message}`);
+      }
+
+      return data || [];
+    } catch (err) {
+      console.error('Error in getAllAgentResponses:', err);
+      return [];
+    }
+  }
+
+  static async getAgentResponseById(id: number): Promise<AgentResponse | null> {
+    const { data, error } = await supabase
+      .from('agent_responses')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null; // No rows found
+      }
+      throw new Error(`Failed to fetch agent response: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  static async createAgentResponse(agentResponse: AgentResponseInsert): Promise<AgentResponse> {
+    const { data, error } = await supabase
+      .from('agent_responses')
+      .insert(agentResponse)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to create agent response: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  static async updateAgentResponse(id: number, updates: AgentResponseUpdate): Promise<AgentResponse> {
+    const { data, error } = await supabase
+      .from('agent_responses')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to update agent response: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  static async deleteAgentResponse(id: number): Promise<void> {
+    const { error } = await supabase
+      .from('agent_responses')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(`Failed to delete agent response: ${error.message}`);
+    }
+  }
+
+  static async searchAgentResponses(query: string): Promise<AgentResponse[]> {
+    const { data, error } = await supabase
+      .from('agent_responses')
+      .select('*')
+      .or(`agent_prompt.ilike.%${query}%,attack.ilike.%${query}%,agent_response.ilike.%${query}%,evaluation.ilike.%${query}%`)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to search agent responses: ${error.message}`);
+    }
+
+    return data || [];
+  }
+
+  static async getAgentResponsesByEvaluation(evaluation: string): Promise<AgentResponse[]> {
+    const { data, error } = await supabase
+      .from('agent_responses')
+      .select('*')
+      .eq('evaluation', evaluation)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to filter agent responses by evaluation: ${error.message}`);
+    }
+
+    return data || [];
+  }
+
+  // Real-time subscriptions for agent responses
+  static subscribeToAgentResponses(callback: (payload: RealtimePostgresChangesPayload<AgentResponse>) => void) {
+    return supabase
+      .channel('agent_responses_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'agent_responses' 
         }, 
         callback
       )

@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import SystemPromptArea from "@/components/SystemPromptArea";
 import PromptManager from "@/components/PromptManager";
 import PromptAnalysisTable from "@/components/PromptAnalysisTable";
+import AgentResponsesTable from "@/components/AgentResponsesTable";
 
 export default function Home() {
   const [selectedPrompt, setSelectedPrompt] = useState<string>("");
@@ -34,8 +35,11 @@ export default function Home() {
           />
         </div>
         
-        {/* Bottom Section: Analysis Table */}
-        <PromptAnalysisTable />
+        {/* Bottom Section: Data Tables */}
+        <div className="space-y-8">
+          <PromptAnalysisTable />
+          <AgentResponsesTable />
+        </div>
       </div>
     </div>
   );

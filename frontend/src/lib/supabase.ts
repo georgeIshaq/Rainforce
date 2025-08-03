@@ -80,6 +80,32 @@ export type Database = {
           created_at?: string | null;
         };
       };
+      agent_responses: {
+        Row: {
+          id: number;
+          agent_prompt: string | null;
+          attack: string;
+          agent_response: string;
+          created_at: string | null;
+          evaluation: string | null;
+        };
+        Insert: {
+          id?: number;
+          agent_prompt?: string | null;
+          attack: string;
+          agent_response: string;
+          created_at?: string | null;
+          evaluation?: string | null;
+        };
+        Update: {
+          id?: number;
+          agent_prompt?: string | null;
+          attack?: string;
+          agent_response?: string;
+          created_at?: string | null;
+          evaluation?: string | null;
+        };
+      };
     };
   };
 };
