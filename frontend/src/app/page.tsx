@@ -5,6 +5,7 @@ import SystemPromptArea from "@/components/SystemPromptArea";
 import PromptManager from "@/components/PromptManager";
 import PromptAnalysisTable from "@/components/PromptAnalysisTable";
 import AgentResponsesTable from "@/components/AgentResponsesTable";
+import EvaluationDashboard from "@/components/EvaluationDashboard";
 
 export default function Home() {
   const [selectedPrompt, setSelectedPrompt] = useState<string>("");
@@ -35,10 +36,19 @@ export default function Home() {
           />
         </div>
         
-        {/* Bottom Section: Data Tables */}
+        {/* Data Tables Section */}
         <div className="space-y-8">
           <PromptAnalysisTable />
           <AgentResponsesTable />
+        </div>
+
+        {/* Dashboard Section - Moved to Bottom */}
+        <div className="space-y-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-white mb-2">Test Dashboard</h2>
+            <p className="text-gray-400">Test results and evaluation metrics</p>
+          </div>
+          <EvaluationDashboard />
         </div>
       </div>
     </div>
