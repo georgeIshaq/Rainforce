@@ -23,7 +23,8 @@ import {
   Target,
   FileText,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Zap
 } from 'lucide-react';
 import { useAttackPatterns } from '@/hooks/useAttackPatterns';
 import { AttackPattern } from '@/lib/supabaseService';
@@ -41,6 +42,7 @@ export default function AttackPatternsTable({ className }: AttackPatternsTablePr
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [searchResults, setSearchResults] = useState<AttackPattern[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Get unique categories and techniques for filtering
   const { categories, techniques } = useMemo(() => {
@@ -140,6 +142,28 @@ export default function AttackPatternsTable({ className }: AttackPatternsTablePr
     return text.substring(0, maxLength) + '...';
   };
 
+  const handleGenerateAttacks = async () => {
+    setIsGenerating(true);
+    try {
+      const response = await fetch('/api/workflows/generate-attacks', {
+        method: 'POST',
+      });
+      
+      if (response.ok) {
+        // Wait a moment then refresh to see new attacks
+        setTimeout(() => {
+          refreshAttacks();
+          setIsGenerating(false);
+        }, 5000); // 5 second delay to let workflow complete
+      } else {
+        setIsGenerating(false);
+      }
+    } catch (error) {
+      console.error('Error generating attacks:', error);
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <Card className={`bg-gradient-to-br from-gray-900/95 to-black/95 border-gray-700/50 ${className}`}>
       <CardHeader className="border-b border-gray-700/50">
@@ -159,6 +183,20 @@ export default function AttackPatternsTable({ className }: AttackPatternsTablePr
           </div>
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleGenerateAttacks}
+              disabled={loading || isGenerating}
+              className="flex items-center gap-2"
+            >
+              {isGenerating ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Zap className="h-4 w-4" />
+              )}
+              {isGenerating ? 'Generating...' : 'Generate New Attacks'}
+            </Button>
             <Button
               variant="ghost"
               size="sm"

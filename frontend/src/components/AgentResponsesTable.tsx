@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, ChevronDown, ChevronRight, Clock, MessageSquare, Target, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Search, Filter, ChevronDown, ChevronRight, Clock, MessageSquare, Target, CheckCircle, XCircle, AlertCircle, Shield, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ const AgentResponsesTable: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [evaluationFilter, setEvaluationFilter] = useState<string>('');
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [isTesting, setIsTesting] = useState(false);
 
   // Get unique evaluations for filter
   const uniqueEvaluations = useMemo(() => {
@@ -95,6 +96,28 @@ const AgentResponsesTable: React.FC = () => {
     return text.substring(0, maxLength) + '...';
   };
 
+  const handleRunSecurityTest = async () => {
+    setIsTesting(true);
+    try {
+      const response = await fetch('/api/workflows/run-security-test', {
+        method: 'POST',
+      });
+      
+      if (response.ok) {
+        // Wait then refresh to see new test results
+        setTimeout(() => {
+          clearSearch(); // This refreshes the responses
+          setIsTesting(false);
+        }, 10000); // 10 second delay for security tests
+      } else {
+        setIsTesting(false);
+      }
+    } catch (error) {
+      console.error('Error running security test:', error);
+      setIsTesting(false);
+    }
+  };
+
   if (loading) {
     return (
       <Card className="w-full bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700">
@@ -134,13 +157,30 @@ const AgentResponsesTable: React.FC = () => {
   return (
     <Card className="w-full bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700">
       <CardHeader>
-        <CardTitle className="text-white flex items-center gap-2">
-          <MessageSquare className="w-5 h-5 text-blue-400" />
-          Agent Responses
-          <Badge variant="secondary" className="ml-auto">
-            {responses.length} {responses.length === 1 ? 'response' : 'responses'}
-          </Badge>
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-white flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-blue-400" />
+            Agent Responses
+            <Badge variant="secondary">
+              {responses.length} {responses.length === 1 ? 'response' : 'responses'}
+            </Badge>
+          </CardTitle>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRunSecurityTest}
+            disabled={loading || isTesting}
+            className="flex items-center gap-2"
+          >
+            {isTesting ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <Shield className="h-4 w-4" />
+            )}
+            {isTesting ? 'Testing...' : 'Run Security Test'}
+          </Button>
+        </div>
         
         {/* Search and Filter Controls */}
         <div className="flex flex-col sm:flex-row gap-4 mt-4">

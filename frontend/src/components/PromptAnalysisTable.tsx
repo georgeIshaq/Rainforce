@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -146,6 +146,8 @@ export default function PromptAnalysisTable() {
     return text.substring(0, maxLength) + '...';
   };
 
+
+
   return (
     <div className="w-full">
       {/* Attack Patterns Table */}
@@ -281,9 +283,8 @@ export default function PromptAnalysisTable() {
                     const isExpanded = expandedRows.has(attack.id);
                     
                     return (
-                      <>
+                      <React.Fragment key={attack.id}>
                         <TableRow 
-                          key={attack.id}
                           className="border-gray-700/50 hover:bg-gray-800/30 cursor-pointer"
                           onClick={() => toggleRowExpansion(attack.id)}
                         >
@@ -406,7 +407,7 @@ export default function PromptAnalysisTable() {
                             </TableCell>
                           </TableRow>
                         )}
-                      </>
+                      </React.Fragment>
                     );
                   })}
                 </TableBody>
